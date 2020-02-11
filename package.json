@@ -1,0 +1,22 @@
+{
+  "name": "rezepte-bot",
+  "version": "1.0.0",
+  "description": "A Telegram bot that receives recipe links and creates a new card on Trello with that.",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "jimp": "^0.9.3",
+    "jsdom": "^16.1.0",
+    "telegraf": "^3.36.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.8"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "recipes",
+    "trello"
+  ],
+  "author": "Benjamin Buhler",
+  "license": "MIT"
+}
