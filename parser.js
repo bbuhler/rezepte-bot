@@ -93,7 +93,13 @@ module.exports = async function rezeptParser(url, labels = [])
 
   result.imageTempFile = `/tmp/${result.title.replace(/\s/g, '-').replace(/[^A-Za-zÄÖÜäöüß-]/g, '')}.jpg`;
 
-  result.tags = result.tags.map(tag => labels.find(label => label.name === tag).id).join();
+  const labelIds = result.tags.map(tag => {
+    const found = labels.find(label => label.name === tag);
+    if (found) return found.id;
+    else console.warn('Unknown tag:', tag)
+  });
+
+  result.tags = labelIds.filter(Boolean).join();
 
   return result;
 };
