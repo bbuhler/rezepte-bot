@@ -7,12 +7,30 @@ class RequiresJavaScriptError extends Error {}
 
 module.exports = async function rezeptParser(url, labels = [])
 {
-  const dom = await JSDOM.fromURL(url);
-  const { head } = dom.window.document;
+  let dom;
+
+  try
+  {
+    dom = await JSDOM.fromURL(url);
+  }
+  catch (err)
+  {
+    if (!/getaddrinfo ENOTFOUND/.test(err.message))
+    {
+      throw err;
+    }
+
+    console.warn(err.message);
+    console.log('Try again using Google Cache...');
+
+    dom = await JSDOM.fromURL(`https://webcache.googleusercontent.com/search?q=cache:${url}`);
+  }
+
+  const { document } = dom.window;
 
   function getRecipeLinkingData()
   {
-    const ldJsonScriptTags = dom.window.document.querySelectorAll('script[type="application/ld+json"]');
+    const ldJsonScriptTags = document.querySelectorAll('script[type="application/ld+json"]');
 
     for (const ldJsonScriptTag of ldJsonScriptTags)
     {
@@ -40,7 +58,7 @@ module.exports = async function rezeptParser(url, labels = [])
 
   function meta(property)
   {
-    const metaTag = head.querySelector(`meta[property="${property}"]`);
+    const metaTag = document.querySelector(`meta[property="${property}"]`);
 
     if (metaTag)
     {
@@ -50,7 +68,7 @@ module.exports = async function rezeptParser(url, labels = [])
 
   function metas(property)
   {
-    const metaTags = head.querySelectorAll(`meta[property="${property}"]`);
+    const metaTags = document.querySelectorAll(`meta[property="${property}"]`);
 
     if (metaTags.length)
     {
@@ -62,20 +80,20 @@ module.exports = async function rezeptParser(url, labels = [])
 
   function firstImage(selector = 'main')
   {
-    const imgTag = dom.window.document.querySelector(`${selector} img`);
+    const imgTag = document.querySelector(`${selector} img`);
     if (imgTag) return imgTag.src;
   }
 
   const linkingData = getRecipeLinkingData();
   const result = {
-    title: linkingData.name || meta('og:title') || dom.window.document.title,
+    title: linkingData.name || meta('og:title') || document.title,
     image: (Array.isArray(linkingData.image) ? linkingData.image[0] : linkingData.image) || meta('og:image') || firstImage('article') || firstImage('main'),
     imageTempFile: undefined,
     url: meta('og:url') || url,
     tags: [],
   };
 
-  if (dom.window.document.querySelector('noscript') && !Object.keys(linkingData).length && !meta('og:title'))
+  if (document.querySelector('noscript') && !Object.keys(linkingData).length && !meta('og:title'))
   {
     // TODO implement JSDOM with runScripts: "dangerously"
     throw new RequiresJavaScriptError();
@@ -86,7 +104,7 @@ module.exports = async function rezeptParser(url, labels = [])
     result.tags.push('Hauptgericht');
   }
 
-  if (isVegan(linkingData.suitableForDiet) || metas('article:tag').some(isVegan) || isVegan(meta('og:title')) || isVegan(meta('og:description')) || isVegan(dom.window.document.title))
+  if (isVegan(linkingData.suitableForDiet) || metas('article:tag').some(isVegan) || isVegan(meta('og:title')) || isVegan(meta('og:description')) || isVegan(document.title))
   {
     result.tags.push('Vegan');
   }
