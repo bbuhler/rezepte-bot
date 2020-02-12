@@ -25,13 +25,19 @@ module.exports = class Trello
     return this.request.get(`board/${boardId}/labels?fields=name`);
   }
 
-  createCard(listId, { title, imageTempFile, url, tags })
+  getBoardMembers(boardId)
+  {
+    return this.request.get(`board/${boardId}/members?fields=fullName`);
+  }
+
+  createCard(listId, { title, imageTempFile, url, tags, member })
   {
     const formData = {
       name: title,
       desc: url,
       fileSource: createReadStream(imageTempFile),
       idLabels: tags,
+      idMembers: member,
     };
 
     return this.request.post({ url: 'cards', qs: { idList: listId }, formData });

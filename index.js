@@ -10,6 +10,7 @@ const trello = new Trello(process.env.TRELLO_API_KEY, process.env.TRELLO_TOKEN);
 const boardId = process.env.TRELLO_BOARD_ID;
 const labelsPromise = trello.getBoardLabels(boardId);
 const listsPromise = trello.getBoardLists(boardId);
+const membersPromise = trello.getBoardMembers(boardId);
 
 const emoji = {
   robot: '\u{1F916}\u{FE0F}',
@@ -44,9 +45,10 @@ bot.hears(/https?\:\/\//, async ctx =>
 
     await processImage(data.image, data.imageTempFile);
 
-    const card = await trello.createCard(firstList.id, data);
+    const member = (await membersPromise).find(user => user.fullName.includes(senderName));
+    if (member) data.member = member.id;
 
-    // TODO add member to card matched by sender
+    const card = await trello.createCard(firstList.id, data);
 
     ctx.reply(`Hey ${senderName},\nich hab's in die "${firstList.name}" Liste eingetragen ${emoji.yummy}\n\n${card.url}`);
   }
