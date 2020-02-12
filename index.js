@@ -34,6 +34,8 @@ bot.hears(/https?\:\/\//, async ctx =>
 
   console.log(url);
 
+  ctx.replyWithChatAction('typing');
+
   try
   {
     const [firstList] = await listsPromise;
