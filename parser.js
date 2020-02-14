@@ -81,7 +81,11 @@ module.exports = async function rezeptParser(url, labels = [])
   function firstImage(selector = 'main')
   {
     const imgTag = document.querySelector(`${selector} img`);
-    if (imgTag) return imgTag.src;
+
+    if (imgTag && !imgTag.closest('aside') && !imgTag.src.startsWith('data:'))
+    {
+      return imgTag.src;
+    }
   }
 
   const linkingData = getRecipeLinkingData();
@@ -109,7 +113,10 @@ module.exports = async function rezeptParser(url, labels = [])
     result.tags.push('Vegan');
   }
 
-  result.imageTempFile = `/tmp/${result.title.replace(/\s/g, '-').replace(/[^A-Za-zÄÖÜäöüß-]/g, '')}.jpg`;
+  if (result.image)
+  {
+    result.imageTempFile = `/tmp/${result.title.replace(/\s/g, '-').replace(/[^A-Za-zÄÖÜäöüß-]/g, '')}.jpg`;
+  }
 
   const labelIds = result.tags.map(tag => {
     const found = labels.find(label => label.name === tag);

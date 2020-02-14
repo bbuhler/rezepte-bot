@@ -35,7 +35,7 @@ module.exports = class Trello
     const formData = {
       name: title,
       desc: url,
-      fileSource: createReadStream(imageTempFile),
+      fileSource: imageTempFile && createReadStream(imageTempFile),
       idLabels: tags,
       idMembers: member,
     };
