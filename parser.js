@@ -40,7 +40,7 @@ module.exports = async function rezeptParser(url, labels = [])
       {
         for (const ldJsonEntry of ldJson['@graph'])
         {
-          if (ldJsonEntry['@type'] === '')
+          if (ldJsonEntry['@type'] === 'Recipe')
           {
             return ldJsonEntry;
           }
