@@ -36,9 +36,9 @@ module.exports = async function rezeptParser(url, labels = [])
     {
       const ldJson = JSON.parse(ldJsonScriptTag.textContent);
 
-      if (Array.isArray(ldJson['@graph']))
+      if (Array.isArray(ldJson['@graph'] || ldJson))
       {
-        for (const ldJsonEntry of ldJson['@graph'])
+        for (const ldJsonEntry of ldJson['@graph'] || ldJson)
         {
           if (ldJsonEntry['@type'] === 'Recipe')
           {
