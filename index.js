@@ -43,7 +43,15 @@ bot.hears(/https?\:\/\//, async ctx =>
     const labels = await labelsPromise;
     const data = await rezeptParser(url, labels);
 
-    if (data.image) await processImage(data.image, data.imageTempFile);
+    if (data.image) try
+    {
+      await processImage(data.image, data.imageTempFile);
+    }
+    catch (err)
+    {
+      delete data.imageTempFile;
+      console.error(err);
+    }
 
     const member = (await membersPromise).find(user => user.fullName.includes(senderName));
     if (member) data.member = member.id;
