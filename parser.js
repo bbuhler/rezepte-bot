@@ -1,7 +1,7 @@
 const { JSDOM } = require('jsdom');
 
 const isVegan = str => /vegan/i.test(str);
-const isHauptgericht = str => /hauptgericht/i.test(str);
+const isHauptgericht = str => /haupt(gericht|speise)/i.test(str);
 
 class RequiresJavaScriptError extends Error {}
 
@@ -15,7 +15,7 @@ module.exports = async function rezeptParser(url, labels = [])
   }
   catch (err)
   {
-    if (!/getaddrinfo ENOTFOUND/.test(err.message))
+    if (!/getaddrinfo ENOTFOUND/.test(err.message) && ![404, 403].includes(err.statusCode))
     {
       throw err;
     }
