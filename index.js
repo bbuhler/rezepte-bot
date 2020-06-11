@@ -45,6 +45,7 @@ bot.hears(/https?\:\/\//, async ctx =>
 
     if (data.image) try
     {
+      ctx.replyWithChatAction('upload_photo');
       await processImage(data.image, data.imageTempFile);
     }
     catch (err)
@@ -52,6 +53,8 @@ bot.hears(/https?\:\/\//, async ctx =>
       delete data.imageTempFile;
       console.error(err);
     }
+
+    ctx.replyWithChatAction('typing');
 
     const member = (await membersPromise).find(user => user.fullName.includes(senderName));
     if (member) data.member = member.id;
@@ -71,6 +74,11 @@ bot.hears(/https?\:\/\//, async ctx =>
     else
     {
       ctx.reply(`${emoji.robot}${emoji.explosion} Kapuuuut.... Irgendwas ist schief gegangen.`);
+
+      if (senderName === 'Ben')
+      {
+        ctx.replyWithMarkdown('```' + JSON.stringify(err, null, 2) + '```');
+      }
     }
   }
 });
