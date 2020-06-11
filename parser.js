@@ -1,21 +1,33 @@
 const { JSDOM } = require('jsdom');
+const iso8601 = require('iso8601-duration');
 
 const isVegan = str => /vegan/i.test(str);
 const isHauptgericht = str => /haupt(gericht|speise)/i.test(str);
+const isDessert = str => /dessert|nachtisch/i.test(str);
+const isSnack = str => /snacks?/i.test(str);
+const isSchnell = str => /schnell|fast|quick?/i.test(str);
+
+const parseDuration = str => iso8601.toSeconds(iso8601.parse(str)) / 60;
 
 class RequiresJavaScriptError extends Error {}
+class RetryWithGoogleCacheError extends Error {}
 
-module.exports = async function rezeptParser(url, labels = [])
+module.exports = async function rezeptParser(url, labels = [], forceGoogleCache = false)
 {
   let dom;
 
   try
   {
+    if (forceGoogleCache)
+    {
+      throw new RetryWithGoogleCacheError();
+    }
+
     dom = await JSDOM.fromURL(url);
   }
   catch (err)
   {
-    if (!/getaddrinfo ENOTFOUND/.test(err.message) && ![404, 403].includes(err.statusCode))
+    if (!/getaddrinfo ENOTFOUND/.test(err.message) && ![404, 403].includes(err.statusCode) && !err instanceof RetryWithGoogleCacheError)
     {
       throw err;
     }
@@ -99,16 +111,39 @@ module.exports = async function rezeptParser(url, labels = [])
 
   if (document.querySelector('noscript') && !Object.keys(linkingData).length && !meta('og:title'))
   {
-    // TODO implement JSDOM with runScripts: "dangerously"
+    if (!forceGoogleCache)
+    {
+      return rezeptParser(url, labels, true);
+    }
+
     throw new RequiresJavaScriptError();
   }
 
-  if (isHauptgericht(linkingData.recipeCategory) || metas('article:tag').some(isHauptgericht) || Array.isArray(linkingData.recipeCategory) && linkingData.recipeCategory.some(isHauptgericht))
+  const category = check => check(linkingData.recipeCategory) ||
+    metas('article:tag').some(check) ||
+    Array.isArray(linkingData.recipeCategory) && linkingData.recipeCategory.some(check);
+
+  if (category(isHauptgericht))
   {
     result.tags.push('Hauptgericht');
   }
 
-  if (isVegan(linkingData.suitableForDiet) || metas('article:tag').some(isVegan) || isVegan(meta('og:title')) || isVegan(meta('og:description')) || isVegan(document.title))
+  if (category(isDessert))
+  {
+    result.tags.push('Dessert');
+  }
+
+  if (category(isSnack))
+  {
+    result.tags.push('Snack');
+  }
+
+  if (category(isSchnell) || linkingData.totalTime && parseDuration(linkingData.totalTime) <= 30)
+  {
+    result.tags.push('Schnell');
+  }
+
+  if (category(isVegan) || isVegan(linkingData.suitableForDiet) || isVegan(meta('og:title')) || isVegan(meta('og:description')) || isVegan(document.title))
   {
     result.tags.push('Vegan');
   }

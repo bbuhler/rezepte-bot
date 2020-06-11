@@ -5,11 +5,12 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
+    "iso8601-duration": "^1.2.0",
     "jimp": "^0.9.3",
     "jsdom": "^16.1.0",
-    "telegraf": "^3.36.0",
     "request": "^2.88.0",
-    "request-promise-native": "^1.0.8"
+    "request-promise-native": "^1.0.8",
+    "telegraf": "^3.36.0"
   },
   "keywords": [
     "telegram",
