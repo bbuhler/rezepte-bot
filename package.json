@@ -6,7 +6,7 @@
   "main": "index.js",
   "dependencies": {
     "iso8601-duration": "^1.2.0",
-    "jimp": "^0.9.3",
+    "jimp": "^0.16.1",
     "jsdom": "^16.1.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.8",
