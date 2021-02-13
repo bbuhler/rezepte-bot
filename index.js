@@ -29,55 +29,61 @@ bot.start(ctx =>
 
 bot.hears(/https?\:\/\//, async ctx =>
 {
-  const { offset, length } = ctx.update.message.entities.find(entity => entity.type === 'url');
-  const url = ctx.message.text.substr(offset, length);
   const senderName = ctx.message.from.first_name;
+  const urls = new Set(ctx.message.entities
+    .filter(entity => entity.type === 'url')
+    .map(({ offset, length }) => ctx.message.text.substr(offset, length))
+    .filter((url, index, array) => !array.some(it => it !== url && it.toLowerCase().includes(url.toLowerCase())))
+  );
 
-  console.log(url);
-
-  ctx.replyWithChatAction('typing');
-
-  try
+  for (let url of urls)
   {
-    const [firstList] = await listsPromise;
-    const labels = await labelsPromise;
-    const data = await rezeptParser(url, labels);
-
-    if (data.image) try
-    {
-      ctx.replyWithChatAction('upload_photo');
-      await processImage(data.image, data.imageTempFile);
-    }
-    catch (err)
-    {
-      delete data.imageTempFile;
-      console.error(err);
-    }
+    console.log(url);
 
     ctx.replyWithChatAction('typing');
 
-    const member = (await membersPromise).find(user => user.fullName.includes(senderName));
-    if (member) data.member = member.id;
-
-    const card = await trello.createCard(firstList.id, data);
-
-    ctx.reply(`Hey ${senderName},\nich hab's in die "${firstList.name}" Liste eingetragen ${emoji.yummy}\n\n${card.url}`);
-  }
-  catch (err)
-  {
-    console.error(err);
-
-    if (err instanceof rezeptParser.RequiresJavaScriptError)
+    try
     {
-      ctx.reply(`Tut mir leid, ${emoji.sorry}\nich kann das Rezept unter dem Link (noch) nicht lesen. ${emoji.underConstruction}`);
-    }
-    else
-    {
-      ctx.reply(`${emoji.robot}${emoji.explosion} Kapuuuut.... Irgendwas ist schief gegangen.`);
+      const [firstList] = await listsPromise;
+      const labels = await labelsPromise;
+      const data = await rezeptParser(url, labels);
 
-      if (senderName === 'Ben')
+      if (data.image) try
       {
-        ctx.replyWithMarkdown('```' + JSON.stringify(err, null, 2) + '```');
+        ctx.replyWithChatAction('upload_photo');
+        await processImage(data.image, data.imageTempFile);
+      }
+      catch (err)
+      {
+        delete data.imageTempFile;
+        console.error(err);
+      }
+
+      ctx.replyWithChatAction('typing');
+
+      const member = (await membersPromise).find(user => user.fullName.includes(senderName));
+      if (member) data.member = member.id;
+
+      const card = await trello.createCard(firstList.id, data);
+
+      ctx.reply(`Hey ${senderName},\nich hab's in die "${firstList.name}" Liste eingetragen ${emoji.yummy}\n\n${card.url}`);
+    }
+    catch (err)
+    {
+      console.error(err);
+
+      if (err instanceof rezeptParser.RequiresJavaScriptError)
+      {
+        ctx.reply(`Tut mir leid, ${emoji.sorry}\nich kann das Rezept unter dem Link (noch) nicht lesen. ${emoji.underConstruction}`);
+      }
+      else
+      {
+        ctx.reply(`${emoji.robot}${emoji.explosion} Kapuuuut.... Irgendwas ist schief gegangen.`);
+
+        if (senderName === 'Ben')
+        {
+          ctx.replyWithMarkdown('```' + JSON.stringify(err, null, 2) + '```');
+        }
       }
     }
   }
